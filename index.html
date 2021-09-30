@@ -88,21 +88,36 @@
             left: 25.1px;
         }
 
-        #damages > .row{
+        #damages>.row {
             position: relative;
         }
-        #damages > .row button{
+
+        #damages>.row button {
             position: absolute;
-    right: -8px;
-    top: 62px;
-    font-size: 20px;
+            right: -8px;
+            top: 62px;
+            font-size: 20px;
         }
 
-        .info{
+        .info {
             background: lightgoldenrodyellow;
-    padding: 8px;
-    font-size: 14px;
-    text-align: center;
+            padding: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* video */
+        video {
+            width: 100%;
+        }
+
+        #modalChange {
+            overflow: hidden;
+        }
+
+        #modalChange>div>div {
+            transition: .3s ease all;
+            /* transform: translateX(-100%); */
         }
     </style>
 </head>
@@ -166,6 +181,9 @@
                             <label for="">Enter Odometer reading</label>
                             <input type="number" class="form-control text-dark" name="odoMeterStartNumber">
                         </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()">Upload Screenshot</button>
+                        </div>
                         <input type="hidden" class="form-control text-dark" name="tripId">
                     </div>
                     <div class="modal-footer">
@@ -216,6 +234,9 @@
                             <label for="">Enter Odometer reading</label>
                             <input type="number" class="form-control text-dark" name="odoMeterEndNumber">
                         </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()">Upload Screenshot</button>
+                        </div>
                         <div id="damages">
                             <h3>Damages</h3>
                             <div class="row">
@@ -227,7 +248,8 @@
                                     <label for="">amount</label>
                                     <input type="number" class="form-control text-dark" name="amount[]">
                                 </div>
-                                <button class="btn btn-sm text-danger" type="button" onclick="removeDamage(this)">&times;</button>
+                                <button class="btn btn-sm text-danger" type="button"
+                                    onclick="removeDamage(this)">&times;</button>
                             </div>
                             <button type="button" id="addDamageBtn" class="btn btn-primary">+ Add damage</button>
                         </div>
@@ -242,8 +264,51 @@
     </div>
     <!-- modal boxes -->
 
+    <!-- take picture modal -->
+    <div class="modal fade" id="takePicture" tabindex="-1" role="dialog" aria-labelledby="takePicture"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered h-100 m-0" role="document">
+            <div id="modalChange" class="modal-content">
+                <div style="overflow: auto; display: flex; width: 200vw;">
+                    <div class=" justify-content-center" style="background-color: #000; height: 100vh; width: 100vw;">
+                        <div class="playground position-relative h-100 d-flex justify-content-center">
+                            <div class="d-flex w-100">
+                                <video id="video" width="100%" height="100%" autoplay></video>
+                                <canvas id="canvas" width="1200" height="800" class="d-none"></canvas>
+                            </div>
+                            <div id="results"></div>
+                            <button class="btn text-white position-absolute left-0" data-dismiss="modal"><i
+                                    class="fas fa-arrow-left"></i> back</button>
+                            <button class="btn text-white position-absolute " style="bottom: 10px;"
+                                onclick="takepicture()">
+                                Take</button>
+                        </div>
+                    </div>
+                    <div class=" justify-content-center" style="background-color: #000; height: 100vh; width: 100vw;">
+                        <div class="playground position-relative h-100 d-flex justify-content-center">
+                            <div class="d-flex w-100 align-items-center">
+                                <img src="" id="preview" class="" alt="" width="360" height="240"
+                                    style="object-fit:contain;">
+                            </div>
+                            <div id="results"></div>
+                            <button type="button" class="btn text-white position-absolute left-0" data-dismiss="modal"><i
+                                    class="fas fa-arrow-left"></i> back</button>
+                            <button type="button" class="btn text-white position-absolute" onclick="retake()"><i
+                                    class="fas fa-sync"></i>
+                                Retake</button>
+                            <button type="button" class="btn text-white position-absolute " style="bottom: 10px;" onclick="submitSS()">
+                                Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal boxes -->
+
 
     <!-- Core -->
+
     <script src="/assets/vendor/jquery/dist/jquery.min.js"></script>
     <script src="/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/vendor/js-cookie/js.cookie.js"></script>
@@ -252,12 +317,13 @@
 
     <!-- for handle fetch requests -->
     <script src="./service.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.24.min.js"></script>
+
 
 
     <script>
 
 
-window.location
 
         // global variables
         let tripId = location.href.split('=')[1];
@@ -288,13 +354,13 @@ window.location
             let damges = [];
             let desArray = document.getElementsByName('description[]');
             let amountArray = document.getElementsByName('amount[]');
-            desArray.forEach((elem,i)=>{
-                damges.push({description:elem.value,amount:amountArray[i].value})
+            desArray.forEach((elem, i) => {
+                damges.push({ description: elem.value, amount: amountArray[i].value })
             })
             fetchFromServer('POST', 'https://hirebus-backend.herokuapp.com/driver/verifyEndTrip', {
-                otp, odoMeterEndNumber: +odoMeterEndNumber, tripId, odoMeterEndScreenshotURL: '',damges
+                otp, odoMeterEndNumber: +odoMeterEndNumber, tripId, odoMeterEndScreenshotURL: '', damges
             }).then(res => {
-                if(res) window.location.href = `./price.html?tripId=${tripId}`
+                if (res) window.location.href = `./price.html?tripId=${tripId}`
             }).catch(err => console.log(err))
         })
 
@@ -305,17 +371,17 @@ window.location
         // );
 
 
-        function removeDamage(elem){
+        function removeDamage(elem) {
             console.log(elem)
             elem.closest('.row').remove()
         }
 
 
 
-document.getElementById('addDamageBtn').addEventListener('click',(e)=>{
-    let row = document.createElement('div');
-    row.classList.add('row');
-    row.innerHTML = ` <div class="form-group col-9 pr-1">
+        document.getElementById('addDamageBtn').addEventListener('click', (e) => {
+            let row = document.createElement('div');
+            row.classList.add('row');
+            row.innerHTML = ` <div class="form-group col-9 pr-1">
                                     <label for="">Description</label>
                                     <input type="text" class="form-control text-dark" name="description[]">
                                 </div>
@@ -325,9 +391,9 @@ document.getElementById('addDamageBtn').addEventListener('click',(e)=>{
                                 </div>
                                 <button class="btn btn-sm text-danger" type="button" onclick="removeDamage(this)">&times;</button>
 `
-let rows = document.getElementById('damages').getElementsByClassName('row');
-rows[rows.length -1].after(row)
-})
+            let rows = document.getElementById('damages').getElementsByClassName('row');
+            rows[rows.length - 1].after(row)
+        })
 
 
 
@@ -362,7 +428,10 @@ rows[rows.length -1].after(row)
 
         function renderInUI(res) {
             // chage end start btn
-            document.querySelector('footer').children[res.trips.status ? 1 : 0].classList.remove('d-none')
+            if(res.trips.status==1)
+            document.querySelector('footer').children[0].classList.remove('d-none')
+            if(res.trips.status==2)
+            document.querySelector('footer').children[1].classList.remove('d-none')
             // chage end start btn
             let elem = document.createElement('div');
             elem.classList.add('card', 'mb-3')
@@ -445,6 +514,91 @@ rows[rows.length -1].after(row)
             `
             document.getElementById('tripCard').appendChild(elem)
         }
+
+
+
+
+
+
+        async function startCamera() {
+            let stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            let video = document.getElementById('video');
+            video.srcObject = stream;
+        }
+
+        let SSfile; 
+        function takepicture() {
+            let canvas = document.getElementById('canvas');
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            let image_data_url = canvas.toDataURL('image/jpeg');
+            let preview = document.getElementById('preview');
+            fetch(image_data_url).then(res => res.blob()).then(res => {
+                preview.src = window.URL.createObjectURL(res)
+                SSfile = res;
+            })
+            document.getElementById('modalChange').firstElementChild.firstElementChild.style.transform = "translateX(-100%)"
+            document.getElementById('modalChange').firstElementChild.lastElementChild.style.transform = "translateX(-100%)"
+        }
+        
+        function retake() {
+            document.getElementById('modalChange').firstElementChild.firstElementChild.style.transform = "translateX(0%)"
+            document.getElementById('modalChange').firstElementChild.lastElementChild.style.transform = "translateX(0%)"
+        }
+
+
+        function submitSS(){
+console.log(SSfile)
+        }
+
+
+
+
+
+
+
+
+        //  upload to s3
+        //Bucket Configurations
+var bucketName = BUCKET_NAME;
+var bucketRegion = BUCKET_REGION;
+var IdentityPoolId = IDENTITY_POOL_ID;
+
+ AWS.config.update({
+                region: bucketRegion,
+                credentials: new AWS.CognitoIdentityCredentials({
+                    IdentityPoolId: IdentityPoolId
+                })
+            });
+
+            var s3 = new AWS.S3({
+                apiVersion: '2006-03-01',
+                params: {Bucket: bucketName}
+        });
+
+
+
+
+
+        function s3upload(file,fileName) {
+   if (file) 
+   {
+     var filePath = 'my-first-bucket-path/' + fileName;
+     var fileUrl = 'https://' + bucketRegion + '.amazonaws.com/my-    first-bucket/' +  filePath;
+     s3.upload({
+        Key: filePath,
+        Body: file,
+        ACL: 'public-read'
+        }, function(err, data) {
+        if(err) {
+        reject('error');
+        }
+        alert('Successfully Uploaded!');
+        }).on('httpUploadProgress', function (progress) {
+        var uploaded = parseInt((progress.loaded * 100) / progress.total);
+        $("progress").attr('value', uploaded);
+      });
+   }
+};
     </script>
 </body>
 
