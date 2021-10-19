@@ -182,7 +182,7 @@
                             <input type="number" class="form-control text-dark" name="odoMeterStartNumber">
                         </div>
                         <div class="form-group">
-                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()">Upload Screenshot</button>
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()" type="">Upload Screenshot</button>
                         </div>
                         <input type="hidden" class="form-control text-dark" name="tripId">
                     </div>
@@ -235,7 +235,7 @@
                             <input type="number" class="form-control text-dark" name="odoMeterEndNumber">
                         </div>
                         <div class="form-group">
-                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()">Upload Screenshot</button>
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#takePicture" onclick="startCamera()" type="button">Upload Screenshot</button>
                         </div>
                         <div id="damages">
                             <h3>Damages</h3>
@@ -251,7 +251,7 @@
                                 <button class="btn btn-sm text-danger" type="button"
                                     onclick="removeDamage(this)">&times;</button>
                             </div>
-                            <button type="button" id="addDamageBtn" class="btn btn-primary">+ Add damage</button>
+                            <button type="button" id="addDamageBtn" class="btn btn-primary" type="button">+ Add damage</button>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -317,7 +317,7 @@
 
     <!-- for handle fetch requests -->
     <script src="./service.js"></script>
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.24.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/3.7.4/firebase.js "></script>
 
 
 
@@ -328,6 +328,7 @@
         // global variables
         let tripId = location.href.split('=')[1];
 
+        let odoMeterEndScreenshotURL = '';
 
         getTripDetail()
         function getTripDetail() {
@@ -358,7 +359,7 @@
                 damges.push({ description: elem.value, amount: amountArray[i].value })
             })
             fetchFromServer('POST', 'https://hirebus-backend.herokuapp.com/driver/verifyEndTrip', {
-                otp, odoMeterEndNumber: +odoMeterEndNumber, tripId, odoMeterEndScreenshotURL: '', damges
+                otp, odoMeterEndNumber: +odoMeterEndNumber, tripId, odoMeterEndScreenshotURL: odoMeterEndScreenshotURL, damges
             }).then(res => {
                 if (res) window.location.href = `./price.html?tripId=${tripId}`
             }).catch(err => console.log(err))
@@ -547,58 +548,88 @@
 
 
         function submitSS(){
-console.log(SSfile)
+            uploadImg(SSfile)
         }
 
 
+// adding firebase data
+var firebaseConfig = {
+    apiKey: "AIzaSyAI4pdIKMip6tOBjm8R3ca_gvh_KiSepdg",
+    authDomain: "hirebus-app.firebaseapp.com",
+    projectId: "hirebus-app",
+    storageBucket: "hirebus-app.appspot.com",
+    messagingSenderId: "225800033786",
+    appId: "1:225800033786:web:16f8676ac143c96c0cc043",
+    measurementId: "G-SCDPZMTX0Z",
+  };
+  firebase.initializeApp(firebaseConfig);
 
 
+
+  
+  function uploadImg(file) {
+    const ref = firebase.storage().ref();
+
+    const name = file.name;
+
+    var metadata = {
+      contentType: 'image/png',
+    };
+
+    const task = ref.child(`odoMeterSS/${name}`).put(file);
+    task
+      .then(snapshot => snapshot.ref.getDownloadURL())
+      .then((url) => {
+        console.log(url);
+        odoMeterEndScreenshotURL = url;
+      })
+  }
 
 
 
 
         //  upload to s3
         //Bucket Configurations
-var bucketName = BUCKET_NAME;
-var bucketRegion = BUCKET_REGION;
-var IdentityPoolId = IDENTITY_POOL_ID;
+// var bucketName = BUCKET_NAME;
+// var bucketRegion = BUCKET_REGION;
+// var IdentityPoolId = IDENTITY_POOL_ID;
 
- AWS.config.update({
-                region: bucketRegion,
-                credentials: new AWS.CognitoIdentityCredentials({
-                    IdentityPoolId: IdentityPoolId
-                })
-            });
+//  AWS.config.update({
+//                 region: bucketRegion,
+//                 credentials: new AWS.CognitoIdentityCredentials({
+//                     IdentityPoolId: IdentityPoolId
+//                 })
+//             });
 
-            var s3 = new AWS.S3({
-                apiVersion: '2006-03-01',
-                params: {Bucket: bucketName}
-        });
-
-
+//             var s3 = new AWS.S3({
+//                 apiVersion: '2006-03-01',
+//                 params: {Bucket: bucketName}
+//         });
 
 
 
-        function s3upload(file,fileName) {
-   if (file) 
-   {
-     var filePath = 'my-first-bucket-path/' + fileName;
-     var fileUrl = 'https://' + bucketRegion + '.amazonaws.com/my-    first-bucket/' +  filePath;
-     s3.upload({
-        Key: filePath,
-        Body: file,
-        ACL: 'public-read'
-        }, function(err, data) {
-        if(err) {
-        reject('error');
-        }
-        alert('Successfully Uploaded!');
-        }).on('httpUploadProgress', function (progress) {
-        var uploaded = parseInt((progress.loaded * 100) / progress.total);
-        $("progress").attr('value', uploaded);
-      });
-   }
-};
+
+
+//         function s3upload(file,fileName) {
+//    if (file) 
+//    {
+//      var filePath = 'my-first-bucket-path/' + fileName;
+//      var fileUrl = 'https://' + bucketRegion + '.amazonaws.com/my-    first-bucket/' +  filePath;
+//      s3.upload({
+//         Key: filePath,
+//         Body: file,
+//         ACL: 'public-read'
+//         }, function(err, data) {
+//         if(err) {
+//         reject('error');
+//         }
+//         alert('Successfully Uploaded!');
+//         }).on('httpUploadProgress', function (progress) {
+//         var uploaded = parseInt((progress.loaded * 100) / progress.total);
+//         $("progress").attr('value', uploaded);
+//       });
+//    }
+// };
     </script>
 </body>
 
